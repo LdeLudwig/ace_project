@@ -60,26 +60,43 @@ def handle_orders(json_object, connection):
         # Valida estoque
         if current_stock >= qty_requested:
             connection.send(json.dumps({"status": True,"message":f"Pedido {order_num} processado com sucesso!"}).encode('utf-8'))
+            
+            sending_order_to_manipulator(json_object=json_object)
 
-            new_stock = current_stock - qty_requested
-
-            # Atualiza planilha
-            new_row = [date] + [""] * (product_col - 1) + [new_stock] + [""] * (len(headers) - product_col - 1)
-            worksheet.append_row(new_row)
-            print(f"Pedido #{order_num} processado com sucesso! Estoque atualizado para {new_stock}.")
         else:
             print(f"Erro: Estoque insuficiente para o produto {product_num}. Pedido #{order_num} recusado.")
             connection.send(json.dumps({"status": False, "message":f"Estoque insuficiente para o produto {product_num}"}).encode('utf-8'))
+            return False
     except Exception as e:
         print(f"Erro ao processar pedido: {str(e)}")
+        return False
     return True
     
     
     
-def sending_order_to_manipulator(json_object):
+def sending_order_to_manipulator(json_object, stock_status, connection):
+        # verifica o estado do estoque e envia o pedido para o microcontrolador
+    if stock_status:
+        connection.send(bytes(json_object,'UTF-8'))
+        """ 
+        
+        Adicionar lógica para envio do pedido para o robô
+        
+        """
+    return 1
+
+def hendle_weight_changes(json_object):
     """ 
+    Implementar essa parte quando a balança registrar uma mudança de peso. 
+    Inserir uma condicionamento se tirar e se colocar itens na balança. As duas situações devem alterar o estoque.
     
-    Adicionar lógica para envio do pedido para o robô
+    
+    new_stock = current_stock - qty_requested
+
+    # Atualiza planilha
+    new_row = [date] + [""] * (product_col - 1) + [new_stock] + [""] * (len(headers) - product_col - 1)
+    worksheet.append_row(new_row)
+    print(f"Pedido #{order_num} processado com sucesso! Estoque atualizado para {new_stock}.")            
     
     """
     return 1
@@ -107,8 +124,9 @@ def process_connection(connection, addr):
                     print("Erro: Dados recebidos não estão no formato JSON:", buf.decode('utf-8'))
                     connection.send(json.dumps({"status": False, "message": "Formato inválido"}).encode('utf-8'))
             else:
+                sending_order_to_manipulator(json_object,stock_status=handle_orders, connection=connection)
                 data = buf.decode('utf-8')
-                print(f"Conexão recebida de outro tipo: {addr}")
+                print(f"Conexão recebida do microcontrolador: {addr}")
                 #connection.send("Conexão aceita, mas lógica ainda não definida.".encode('utf-8'))
                 
                 
