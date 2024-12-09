@@ -80,7 +80,13 @@ def watch_changes():
                 order_json = data_transform(new_row_data)
                 orders_client_socket.send(bytes(order_json,'UTF-8'))
                 
-                color_cells(row_index)
+                 # Aguarda resposta do servidor para determinar o status
+                server_response = orders_client_socket.recv(1024).decode('UTF-8')
+                response_data = json.loads(server_response)
+                status = response_data.get('status', 'pending')
+                message = response_data.get('message','')
+                
+                color_cells(row_index, status)
         
         # Atualiza `previous_data` com o estado atual completo
         previous_data = current_data.copy()

@@ -70,7 +70,6 @@ def handle_orders(json_object, connection):
         # Valida estoque
         if current_stock >= qty_requested:
             connection.send(json.dumps({"status": True,"message":f"Pedido {order_num} processado com sucesso!"}).encode('utf-8'))
-            sending_order_to_manipulator(json_object=json_object)
         else:
             print(f"Erro: Estoque insuficiente para o produto {product_num}. Pedido #{order_num} recusado.")
             return False
@@ -79,8 +78,7 @@ def handle_orders(json_object, connection):
         return False
     return True
     
-    
-    
+      
 def sending_order_to_manipulator(json_object, stock_status, target_addr):
     """
         Verifica o estado do estoque e envia o pedido para o microcontrolador
@@ -156,7 +154,7 @@ def handle_weight_changes(json_object):
 
 def process_connection(connection, addr):
     """ 
-        Router para as conexões de socket 
+        Router das conexões do Socket para  
     """
     # Adiciona a conexão ao dicionário global
     active_connections[addr] = connection
@@ -177,6 +175,8 @@ def process_connection(connection, addr):
                     # Processa pedidos de cliente na porta 9090
                     stock_status = handle_orders(json_object, connection)
                     if stock_status:
+                        print(f"O status é {stock_status}, ")
+                    """ if stock_status:
                         # Envia para outro cliente (exemplo: escolhe o primeiro conectado, exceto o atual)
                         target_addr = next(
                             (a for a in active_connections if a != addr),
@@ -186,7 +186,7 @@ def process_connection(connection, addr):
                             print(target_addr)
                             sending_order_to_manipulator(json_object, stock_status, target_addr)
                         else:
-                            print("Nenhum outro cliente conectado para envio.")
+                            print("Nenhum outro cliente conectado para envio.") """
                 else:
                     handle_weight_changes(json_object)
                     print(f"Conexão recebida do microcontrolador: {addr}")
